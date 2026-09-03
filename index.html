@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7efe3">
+  <title>오늘 커피는 누가 살까?</title>
+  <style>
+    :root { --ink:#2b211c; --muted:#77675d; --cream:#fffaf3; --line:#eaded1; --brown:#6f4e37; --orange:#ef8f55; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif; background:radial-gradient(circle at 10% 10%,#fff7dc 0,transparent 28%),linear-gradient(135deg,#f7efe3,#eadbc9); }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    .app { width:min(1180px,100%); margin:auto; padding:28px 20px 44px; }
+    header { display:flex; justify-content:space-between; gap:20px; align-items:end; margin-bottom:24px; }
+    .eyebrow { margin:0 0 5px; color:var(--brown); font-size:.8rem; font-weight:900; letter-spacing:.13em; }
+    h1 { margin:0; font-size:clamp(1.75rem,4vw,3rem); letter-spacing:-.05em; }
+    .subtitle { margin:8px 0 0; color:var(--muted); }
+    .formula { padding:10px 14px; border:1px solid #e7d2bb; border-radius:999px; color:#674633; background:#fff8edb8; font-size:.85rem; white-space:nowrap; }
+    main { display:grid; grid-template-columns:minmax(350px,.85fr) minmax(420px,1.15fr); gap:22px; }
+    .card { border:1px solid rgba(111,78,55,.13); border-radius:24px; background:rgba(255,250,243,.9); box-shadow:0 18px 60px rgba(79,50,30,.1); }
+    .setup { padding:24px; }
+    .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
+    h2 { margin:0; font-size:1.08rem; }
+    .add { border:0; border-radius:12px; padding:9px 13px; color:white; background:var(--brown); font-weight:800; }
+    #rows { display:grid; gap:10px; }
+    .person { display:grid; grid-template-columns:34px 1fr 1.15fr 104px 36px; gap:8px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:16px; background:white; }
+    .num { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; color:white; background:var(--dot); font-size:.8rem; font-weight:900; }
+    input { width:100%; min-width:0; border:1px solid #e7ddd3; border-radius:10px; padding:10px; outline:none; background:#fffdfa; }
+    input:focus { border-color:#b98b68; box-shadow:0 0 0 3px #b98b6820; }
+    .price-wrap { position:relative; }
+    .price-wrap input { padding-right:27px; text-align:right; }
+    .won { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#947f70; font-size:.78rem; }
+    .delete { display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:10px; color:#9d7969; background:#f6eee8; font-size:1rem; }
+    .summary { display:flex; justify-content:space-between; margin-top:16px; padding:14px 4px 0; border-top:1px dashed #ddcdbf; color:var(--muted); font-size:.88rem; }
+    .summary strong { color:var(--ink); }
+    .wheel-card { display:grid; place-items:center; min-height:630px; padding:22px; overflow:hidden; }
+    .wheel-wrap { position:relative; width:min(100%,540px); aspect-ratio:1; filter:drop-shadow(0 20px 24px rgba(67,42,25,.18)); }
+    canvas { display:block; width:100%; height:100%; }
+    .pointer { position:absolute; left:50%; top:-3px; z-index:2; width:0; height:0; transform:translateX(-50%); border-left:18px solid transparent; border-right:18px solid transparent; border-top:36px solid #30241f; filter:drop-shadow(0 3px 2px #0003); }
+    .spin { position:absolute; left:50%; top:50%; width:112px; height:112px; transform:translate(-50%,-50%); border:8px solid #fff6; border-radius:50%; color:white; background:linear-gradient(145deg,#815c43,#513726); box-shadow:0 8px 20px #49301e55; font-size:1.08rem; font-weight:900; }
+    .spin:disabled { cursor:not-allowed; opacity:.65; }
+    .hint { margin:17px 0 0; color:var(--muted); text-align:center; font-size:.86rem; }
+    dialog { width:min(430px,calc(100% - 36px)); padding:0; border:0; border-radius:24px; background:#fffaf3; box-shadow:0 25px 80px #28160f66; }
+    dialog::backdrop { background:#34241c99; backdrop-filter:blur(3px); }
+    .result { padding:30px; text-align:center; }
+    .cup { font-size:3.5rem; }
+    .result h3 { margin:8px 0; font-size:1.65rem; }
+    .result p { color:var(--muted); line-height:1.65; }
+    .result strong { color:var(--brown); }
+    .close { width:100%; margin-top:8px; padding:13px; border:0; border-radius:13px; color:white; background:var(--brown); font-weight:900; }
+    .error { min-height:20px; margin:10px 0 0; color:#c44d3d; font-size:.82rem; }
+    @media(max-width:820px) { header{align-items:start;flex-direction:column}.formula{white-space:normal} main{grid-template-columns:1fr}.wheel-card{min-height:auto}.person{grid-template-columns:30px 1fr 1fr 90px 34px}.app{padding:20px 12px 32px}.setup,.wheel-card{padding:17px} }
+    @media(max-width:540px) { .person{grid-template-columns:30px 1fr 36px}.person .drink,.person .price-wrap{grid-column:2/4}.person .delete{grid-column:3;grid-row:1}.wheel-wrap{width:100%}.spin{width:88px;height:88px;border-width:6px}.subtitle{font-size:.9rem} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div><p class="eyebrow">COFFEE ROULETTE</p><h1>오늘 커피는 누가 살까?</h1><p class="subtitle">비싼 음료를 고를수록 룰렛 칸도, 당첨 확률도 커집니다.</p></div>
+      <div class="formula">당첨 확률 = 내 음료 가격 ÷ 전체 음료 가격</div>
+    </header>
+    <main>
+      <section class="card setup">
+        <div class="section-head"><h2>참여자와 메뉴</h2><button class="add" id="addBtn" type="button">+ 참여자 추가</button></div>
+        <div id="rows"></div>
+        <p class="error" id="error" aria-live="polite"></p>
+        <div class="summary"><span>참여자 <strong id="count">0명</strong></span><span>총 주문 금액 <strong id="total">0원</strong></span></div>
+      </section>
+      <section class="card wheel-card">
+        <div>
+          <div class="wheel-wrap"><div class="pointer" aria-hidden="true"></div><canvas id="wheel" width="700" height="700"></canvas><button class="spin" id="spinBtn" type="button">돌리기</button></div>
+          <p class="hint">가격 비율이 실시간으로 룰렛에 반영됩니다.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="resultDialog"><div class="result"><div class="cup">☕</div><h3 id="winnerTitle"></h3><p id="winnerText"></p><button class="close" id="closeBtn" type="button">확인</button></div></dialog>
+  <script>
+    const COLORS=['#E9855B','#E3B04B','#6BAA75','#5C8DC7','#9A74C2','#D96C89','#57A7A1','#B9855D','#7986CB','#E07855'];
+    const initial=[['정환','아이스 아메리카노',3000],['철수','바나나 라떼',4500],['영희','카페 라떼',4000]];
+    const rows=document.querySelector('#rows'), canvas=document.querySelector('#wheel'), ctx=canvas.getContext('2d');
+    const spinBtn=document.querySelector('#spinBtn'), error=document.querySelector('#error');
+    let rotation=0, spinning=false;
+    const money=n=>Math.round(n).toLocaleString('ko-KR')+'원';
+    function addRow(name='',drink='',price=3000){
+      if(rows.children.length>=10){error.textContent='참여자는 최대 10명까지 추가할 수 있습니다.';return;}
+      const el=document.createElement('div'); el.className='person';
+      el.innerHTML=`<span class="num"></span><input class="name" aria-label="이름" placeholder="이름" maxlength="12"><input class="drink" aria-label="음료명" placeholder="음료명" maxlength="20"><label class="price-wrap"><input class="price" aria-label="가격" type="number" min="500" max="100000" step="100"><span class="won">원</span></label><button class="delete" aria-label="참여자 삭제" type="button">×</button>`;
+      el.querySelector('.name').value=name; el.querySelector('.drink').value=drink; el.querySelector('.price').value=price;
+      el.querySelectorAll('input').forEach(i=>i.addEventListener('input',update));
+      el.querySelector('.delete').addEventListener('click',()=>{ if(rows.children.length<=2){error.textContent='룰렛에는 최소 2명이 필요합니다.';return;} el.remove();update(); });
+      rows.append(el); update();
+    }
+    function data(){ return [...rows.children].map((el,i)=>({name:el.querySelector('.name').value.trim(),drink:el.querySelector('.drink').value.trim(),price:Number(el.querySelector('.price').value),color:COLORS[i%COLORS.length]})); }
+    function update(){
+      [...rows.children].forEach((el,i)=>{el.querySelector('.num').textContent=i+1;el.querySelector('.num').style.setProperty('--dot',COLORS[i%COLORS.length]);});
+      const people=data(), total=people.reduce((s,p)=>s+(p.price>0?p.price:0),0);
+      document.querySelector('#count').textContent=people.length+'명'; document.querySelector('#total').textContent=money(total); error.textContent=''; draw();
+    }
+    function draw(){
+      const people=data(), total=people.reduce((s,p)=>s+(p.price>0?p.price:0),0), c=canvas.width/2, radius=c-18;
+      ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.translate(c,c); ctx.rotate(rotation);
+      let start=-Math.PI/2;
+      people.forEach(p=>{
+        const angle=total>0?(Math.max(0,p.price)/total)*Math.PI*2:Math.PI*2/people.length, end=start+angle;
+        ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,radius,start,end);ctx.closePath();ctx.fillStyle=p.color;ctx.fill();ctx.strokeStyle='#fffaf3';ctx.lineWidth=7;ctx.stroke();
+        if(angle>.16){
+          const mid=(start+end)/2;ctx.save();ctx.rotate(mid);ctx.translate(radius*.62,0);ctx.rotate(Math.PI/2);
+          ctx.fillStyle='white';ctx.textAlign='center';ctx.shadowColor='#3b211d55';ctx.shadowBlur=4;
+          const label=p.name||'이름 없음';ctx.font='800 24px system-ui';ctx.fillText(label,0,-5);ctx.font='700 18px system-ui';ctx.fillText(money(p.price||0),0,22);ctx.restore();
+        } start=end;
+      });
+      ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.strokeStyle='#6f4e37';ctx.lineWidth=10;ctx.stroke();ctx.restore();
+    }
+    function validate(){ const people=data(); if(people.length<2)return '참여자는 최소 2명이 필요합니다.'; if(people.some(p=>!p.name))return '모든 참여자의 이름을 입력해주세요.'; if(people.some(p=>!p.drink))return '모든 참여자의 음료명을 입력해주세요.'; if(people.some(p=>!Number.isFinite(p.price)||p.price<500))return '음료 가격은 500원 이상으로 입력해주세요.'; return ''; }
+    function normalize(a){ return ((a%(Math.PI*2))+Math.PI*2)%(Math.PI*2); }
+    function winner(){
+      const people=data(), total=people.reduce((s,p)=>s+p.price,0), pointer=normalize(-Math.PI/2-rotation), base=-Math.PI/2;
+      let relative=normalize(pointer-base), sum=0;
+      for(const p of people){sum+=(p.price/total)*Math.PI*2;if(relative<=sum+1e-9)return p;} return people.at(-1);
+    }
+    function spin(){
+      const message=validate();if(message){error.textContent=message;return;}if(spinning)return;
+      spinning=true;spinBtn.disabled=true;error.textContent='';
+      const start=rotation, random=new Uint32Array(1);crypto.getRandomValues(random);const r=random[0]/4294967296;
+      const target=start+(6+r*3)*Math.PI*2+r*Math.PI*2, duration=4300, begun=performance.now();
+      const ease=t=>1-Math.pow(1-t,4);
+      function frame(now){const t=Math.min(1,(now-begun)/duration);rotation=start+(target-start)*ease(t);draw();if(t<1){requestAnimationFrame(frame);}else{rotation=normalize(rotation);draw();spinning=false;spinBtn.disabled=false;showWinner(winner());}}
+      requestAnimationFrame(frame);
+    }
+    function showWinner(p){ const total=data().reduce((s,x)=>s+x.price,0), chance=p.price/total*100; document.querySelector('#winnerTitle').textContent=`${p.name}님 당첨!`;document.querySelector('#winnerText').innerHTML=`<strong>${p.drink} (${money(p.price)})</strong>을 고른 ${p.name}님이<br>오늘 커피를 삽니다.<br><small>당첨 확률 ${chance.toFixed(1)}%</small>`;document.querySelector('#resultDialog').showModal(); }
+    document.querySelector('#addBtn').addEventListener('click',()=>addRow('','',3000)); spinBtn.addEventListener('click',spin);
+    document.querySelector('#closeBtn').addEventListener('click',()=>document.querySelector('#resultDialog').close());
+    initial.forEach(p=>addRow(...p));
+  </script>
+</body>
+</html>
